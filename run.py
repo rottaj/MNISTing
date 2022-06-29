@@ -18,6 +18,7 @@ def matplotlib_imshow(img, one_channel=False):
     plt.imshow(npimg, cmap="Greys")
   else:
     plt.imshow(np.transpose(npimg, (1,2,0)))
+  plt.show()
 
 if __name__ == "__main__":
 
@@ -30,7 +31,7 @@ if __name__ == "__main__":
     transform=torchvision.transforms.Compose([torchvision.transforms.ToTensor()]),
   )
 
-  data_classes = np.unique(idx2numpy.convert_from_file(label_file)) # might need to convert to tuple?
+  data_classes = tuple(np.unique(idx2numpy.convert_from_file(label_file))) # might need to convert to tuple?
 
   training_loader = torch.utils.data.DataLoader(
     training_set,
@@ -40,15 +41,19 @@ if __name__ == "__main__":
   )
 
 
-  device = "cuda" if torch.cuda.is_available() else "cpu"
-  model = BabyNet().to(device)
-  print(model)
-  print(data_classes)
+  # Show image grid + labels
   dataiter = iter(training_loader)
   images, labels = dataiter.next()
   img_grid = torchvision.utils.make_grid(images)
   matplotlib_imshow(img_grid, one_channel=True)
-  #print('  '.join(data_classes[labels[j]] for j in range(4)))
+  print(data_classes)
+  print(labels)
+  
+  # Intialize model
+  device = "cuda" if torch.cuda.is_available() else "cpu"
+  model = BabyNet().to(device)
+  
+
 
 
 

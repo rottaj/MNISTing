@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 
+## Baby for now, will make better :)
 
 class BabyNet(nn.Module):
   def __init__(self):
