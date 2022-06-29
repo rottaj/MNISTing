@@ -2,69 +2,53 @@ import os
 import numpy as np
 import torch
 from torch import nn
+import torchvision
 import idx2numpy
 import matplotlib.pyplot as plt
-
-
-image_file = r'./data/t10k-images-idx3-ubyte'
-label_file = r'./data/t10k-labels-idx1-ubyte'
-
-test_images = idx2numpy.convert_from_file(image_file)
-test_labels = idx2numpy.convert_from_file(label_file)
-#print(images)
+from BabyNet import BabyNet
 
 
 
-x1 = torch.from_numpy(np.array(test_images[0]))
-print(x1)
-print(f"Shape of tensor", x1.shape)
-print(f"Datatype of tensor", x1.dtype)
-print(f"Device of tensor", x1.device)
+def matplotlib_imshow(img, one_channel=False):
+  if one_channel:
+    img = img.mean(dim=0)
+  img = img / 2 + 0.5
+  npimg = img.numpy()
+  if one_channel:
+    plt.imshow(npimg, cmap="Greys")
+  else:
+    plt.imshow(np.transpose(npimg, (1,2,0)))
 
-#test_dataloader = DataLoader(test_data, batch_size=64, shuffle=True)
-#train_featuers, train_labels, 
-#print(test_images)
-#print(test_labels)
+if __name__ == "__main__":
 
-class BabyNet(nn.Module):
-  def __init__(self):
-    super(BabyNet, self).__init__()
-    self.flatten = nn.Flatten()
-    self.linear_relu_stack = nn.Sequential(
-      nn.Linear(28*28, 512),
-      nn.ReLU(),
-      nn.Linear(512, 512),
-      nn.ReLU(),
-      nn.Linear(512, 10),
-    )
-  def forward(self, x):
-    x = self.flatten(x)
-    logits = self.linear_relu_stack(x)
-    return logits
+  label_file = r'./data/t10k-labels-idx1-ubyte'
 
+  training_set = torchvision.datasets.MNIST(
+    root="~/fun/MNISTing/data",
+    train=True,
+    download=True,
+    transform=torchvision.transforms.Compose([torchvision.transforms.ToTensor()]),
+  )
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
-model = BabyNet().to(device)
-print(model)
+  data_classes = np.unique(idx2numpy.convert_from_file(label_file)) # might need to convert to tuple?
 
-X = torch.rand(1, 28,28, device=device)
-logits = model(X)
-pred_probab = nn.Softmax(dim=1)(logits)
-y_pred = pred_probab.argmax(1)
-print("X: ", X, len(X))
-print("Predicted class: ", y_pred)
-
-'''
-i =0
-while i <= 5:
-  img = test_images[i].squeeze()
-
-  plt.imshow(img, cmap=plt.cm.binary)
-  label = test_labels[i]
-
-  print("Label: ", label)
+  training_loader = torch.utils.data.DataLoader(
+    training_set,
+    batch_size=4,
+    shuffle=True,
+    num_workers=2
+  )
 
 
-  plt.show()
-  i+=1
- '''
+  device = "cuda" if torch.cuda.is_available() else "cpu"
+  model = BabyNet().to(device)
+  print(model)
+  print(data_classes)
+  dataiter = iter(training_loader)
+  images, labels = dataiter.next()
+  img_grid = torchvision.utils.make_grid(images)
+  matplotlib_imshow(img_grid, one_channel=True)
+  #print('  '.join(data_classes[labels[j]] for j in range(4)))
+
+
+
